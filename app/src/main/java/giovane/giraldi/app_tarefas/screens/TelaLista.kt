@@ -33,7 +33,7 @@ fun TelaLista(
     tarefas: List<Tarefa>,
     onNovaTarefa: () -> Unit,
     onTarefaClick: (Tarefa) -> Unit,
-    onConcluir: (Int) -> Unit,
+    onConcluir: (Int, Boolean) -> Unit,
     onExcluir: (Int) -> Unit
 ) {
 
@@ -92,8 +92,8 @@ fun TelaLista(
 
                         Checkbox(
                             checked = tarefa.concluida,
-                            onCheckedChange = {
-                                onConcluir(tarefa.id)
+                            onCheckedChange = { concluida ->
+                                onConcluir(tarefa.id, concluida)
                             }
                         )
 

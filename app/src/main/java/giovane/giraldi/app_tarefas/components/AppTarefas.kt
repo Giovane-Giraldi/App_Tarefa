@@ -2,10 +2,7 @@ package giovane.giraldi.app_tarefas.components
 
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,21 +14,14 @@ import giovane.giraldi.app_tarefas.rotes.Lista
 import giovane.giraldi.app_tarefas.screens.TelaCadastro
 import giovane.giraldi.app_tarefas.screens.TelaDetalhes
 import giovane.giraldi.app_tarefas.screens.TelaLista
+import giovane.giraldi.app_tarefas.viewmodel.TarefaViewModel
 
 @Composable
-fun AppTarefas() {
 
-    var tarefas by remember {
-        mutableStateOf(
-            listOf(
-                Tarefa(1, "Estudar Kotlin"),
-                Tarefa(2, "Praticar Compose")
-            )
-        )
-    }
-
+fun AppTarefas(
+    tarefaViewModel: TarefaViewModel = viewModel()
+) {
     val navController = rememberNavController()
-
     NavHost(
         navController = navController,
         startDestination = Lista
@@ -40,81 +30,56 @@ fun AppTarefas() {
         composable<Lista> {
 
             TelaLista(
-                tarefas = tarefas,
+
+                tarefas = tarefaViewModel.tarefas,
 
                 onNovaTarefa = {
+
                     navController.navigate(Cadastro)
+
                 },
 
-                onTarefaClick = { tarefa ->
-                    navController.navigate(
-                        Detalhes(tarefa.id)
-                    )
+                onTarefaClick = {tarefa -> navController.navigate(Detalhes(tarefa.id))
+
                 },
 
-                onConcluir = { id ->
-
-                    tarefas = tarefas.map { tarefa ->
-
-                        if (tarefa.id == id) {
-                            tarefa.copy(
-                                concluida = !tarefa.concluida
-                            )
-                        } else {
-                            tarefa
-                        }
-                    }
-                },
-
-                onExcluir = { id ->
-
-                    tarefas = tarefas.filterNot {
-                        it.id == id
-                    }
-                }
+                onConcluir = { id, concluida -> tarefaViewModel.alternarConcluida(concluida, id) },
+                onExcluir = {id->tarefaViewModel.removerTarefa(id)}
             )
-        }
 
+        }
         composable<Cadastro> {
 
             TelaCadastro(
 
                 onSalvar = { descricao ->
 
-                    val novoId =
-                        (tarefas.maxOfOrNull { it.id } ?: 0) + 1
-
-                    tarefas = tarefas + Tarefa(
-                        id = novoId,
-                        descricao = descricao
-                    )
+                    tarefaViewModel.adicionarTarefa(descricao)
 
                     navController.popBackStack()
-                },
 
+                },
                 onVoltar = {
+
                     navController.popBackStack()
                 }
             )
         }
-
         composable<Detalhes> { backStackEntry ->
-
-            val rota =
-                backStackEntry.toRoute<Detalhes>()
-
-            val tarefa =
-                tarefas.firstOrNull {
-                    it.id == rota.id
-                }
-
+            val rota = backStackEntry.toRoute<Detalhes>()
+            val tarefa = tarefaViewModel.buscarTarefa(rota.id)
             TelaDetalhes(
+
                 tarefa = tarefa,
 
                 onVoltar = {
+
                     navController.popBackStack()
+
                 }
+
             )
+
         }
     }
 }
